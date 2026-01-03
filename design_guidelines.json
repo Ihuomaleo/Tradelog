@@ -1,0 +1,133 @@
+{
+  "identity": {
+    "persona": "E1 - The Anti-AI Designer",
+    "archetype": "Electric & Neon (Future, Speed, Disruption)",
+    "vibe": "Professional, High-Stakes, Disciplined, 'Control Room'",
+    "principles": [
+      "Fusion over Imitation: Mix Fintech precision with Gaming HUD aesthetics",
+      "Emotion First: Confidence and Clarity",
+      "Content is King: Data is the hero",
+      "Zoom In: Focus on the P&L and Win Rate",
+      "Negative Space: Use it to separate data clusters"
+    ]
+  },
+  "typography": {
+    "primary_font": "Manrope",
+    "secondary_font": "IBM Plex Sans",
+    "mono_font": "JetBrains Mono",
+    "usage": {
+      "headings": "Manrope, font-bold, tracking-tight",
+      "body": "IBM Plex Sans, font-normal, leading-relaxed",
+      "data_numbers": "JetBrains Mono, font-medium, tracking-wide",
+      "labels": "IBM Plex Sans, uppercase, text-xs, tracking-widest, font-semibold"
+    },
+    "installation": "Import via Google Fonts in index.css: @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Manrope:wght@400;600;700;800&display=swap');"
+  },
+  "colors": {
+    "theme": "dark",
+    "palette": {
+      "background": "#09090b",
+      "foreground": "#fafafa",
+      "card": "#18181b",
+      "card_foreground": "#fafafa",
+      "popover": "#18181b",
+      "popover_foreground": "#fafafa",
+      "primary": "#22c55e",
+      "primary_foreground": "#09090b",
+      "secondary": "#27272a",
+      "secondary_foreground": "#fafafa",
+      "muted": "#27272a",
+      "muted_foreground": "#a1a1aa",
+      "accent": "#3b82f6",
+      "accent_foreground": "#fafafa",
+      "destructive": "#ef4444",
+      "destructive_foreground": "#fafafa",
+      "border": "#27272a",
+      "input": "#27272a",
+      "ring": "#22c55e"
+    },
+    "semantic": {
+      "profit": "#22c55e",
+      "loss": "#ef4444",
+      "neutral": "#3b82f6",
+      "warning": "#eab308"
+    },
+    "gradients": {
+      "profit_glow": "linear-gradient(180deg, rgba(34,197,94,0.2) 0%, rgba(34,197,94,0) 100%)",
+      "loss_glow": "linear-gradient(180deg, rgba(239,68,68,0.2) 0%, rgba(239,68,68,0) 100%)"
+    }
+  },
+  "layout": {
+    "grid_system": "The Control Room Grid",
+    "spacing": {
+      "container_padding": "p-6 md:p-8",
+      "widget_gap": "gap-4 md:gap-6",
+      "internal_padding": "p-4"
+    },
+    "border_radius": {
+      "card": "rounded-xl",
+      "button": "rounded-md",
+      "input": "rounded-md"
+    },
+    "strategies": {
+      "dashboard": "grid grid-cols-1 md:grid-cols-4 gap-4. Primary Chart: col-span-2 row-span-2. Stats: col-span-1. Feed: col-span-1 row-span-2.",
+      "marketing": "grid grid-cols-1 md:grid-cols-12 gap-8. Asymmetrical layouts."
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(34,197,94,0.4)] transition-all duration-300",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border",
+      "ghost": "hover:bg-accent hover:text-accent-foreground"
+    },
+    "cards": {
+      "default": "bg-card border border-border/50 shadow-xl backdrop-blur-sm",
+      "interactive": "hover:border-primary/50 transition-colors duration-300 cursor-pointer"
+    },
+    "inputs": {
+      "default": "bg-input/50 border-border focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all font-mono"
+    },
+    "charts": {
+      "library": "recharts",
+      "style": "Minimalist, hide grid lines where possible, use gradients for areas."
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": "backdrop-blur-xl bg-black/40 border-b border-white/10",
+    "neon_glow": "shadow-[0_0_20px_rgba(34,197,94,0.15)]",
+    "grid_background": "bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"
+  },
+  "assets": {
+    "images": {
+      "login_bg": "https://images.unsplash.com/photo-1627801443714-184af09a2865?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "dashboard_empty_state": "https://images.unsplash.com/photo-1634097537825-b446635b2f7f?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "chart_placeholder": "https://images.unsplash.com/photo-1629963918958-1b62cfe3fe92?crop=entropy&cs=srgb&fm=jpg&q=85"
+    },
+    "icons": "lucide-react"
+  },
+  "motion": {
+    "page_transition": "initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}",
+    "hover_lift": "hover:-translate-y-1 transition-transform duration-200",
+    "list_stagger": "staggerChildren: 0.1"
+  },
+  "accessibility": {
+    "contrast": "Ensure 4.5:1 for text. Use APCA for critical data.",
+    "focus_states": "ring-2 ring-primary ring-offset-2 ring-offset-background",
+    "reduced_motion": "Respect prefers-reduced-motion media query"
+  },
+  "instructions_to_main_agent": [
+    "1. SETUP: Update index.css with the provided color variables and font imports immediately.",
+    "2. LAYOUT: Use the 'Control Room' grid for the dashboard. Do not make it a generic single-column layout.",
+    "3. COMPONENTS: Customize Shadcn components to match the 'Electric & Neon' vibe. Remove default rounded-xl if it looks too soft; prefer rounded-lg or rounded-md for a technical feel.",
+    "4. CHARTS: Use Recharts. Ensure tooltips are styled dark with high contrast.",
+    "5. FORMS: Group inputs logically (e.g., 'Entry Details', 'Risk Management'). Use the 'grid-cols-2' pattern for dense forms.",
+    "6. DATA: Format all currency and percentage data using the 'JetBrains Mono' font.",
+    "7. TESTING: Add data-testid to all interactive elements (buttons, inputs, rows)."
+  ],
+  "universal_guidelines": [
+    "Avoid 'AI Slop': Do not use generic gradients or centered text everywhere.",
+    "Dark Mode Only: The app is strictly dark mode. Do not implement a light mode toggle unless requested.",
+    "Micro-Interactions: Add hover states to every row in the trade history table.",
+    "Spacing: Use p-6 or p-8 for container padding. Don't cram content against the edges."
+  ]
+}
