@@ -25,8 +25,8 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # Load API keys
-FINNHUB_API_KEY = os.environ.get(\"FINNHUB_API_KEY\", \"\")
-ALPHA_VANTAGE_KEY = os.environ.get(\"ALPHA_VANTAGE_KEY\", \"\")
+FINNHUB_API_KEY = os.environ.get("FINNHUB_API_KEY", "")
+ALPHA_VANTAGE_KEY = os.environ.get("ALPHA_VANTAGE_KEY", "")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
