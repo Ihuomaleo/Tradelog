@@ -370,4 +370,149 @@ async def sync_economic_events(
                 raise HTTPException(status_code=response.status_code, detail="Failed to fetch events from Finnhub")
             
             data = response.json()
-            events_data = data.get('economicCalendar', [])\n            \n            if not events_data:\n                return {"message": "No events found", "events_synced": 0}\n            \n            high_impact_keywords = ['NFP', 'Non-Farm', 'FOMC', 'CPI', 'GDP', 'Interest Rate', 'Employment']\n            \n            from models import EconomicEvent\n            events_to_insert = []\n            \n            for event in events_data:\n                event_name = event.get('event', '')\n                impact = 'low'\n                \n                for keyword in high_impact_keywords:\n                    if keyword.lower() in event_name.lower():\n                        impact = 'high'\n                        break\n                \n                event_obj = EconomicEvent(\n                    event_name=event_name,\n                    country=event.get('country', ''),\n                    timestamp=datetime.fromisoformat(event.get('time', datetime.utcnow().isoformat())),\n                    impact_level=impact,\n                    forecast=event.get('estimate'),\n                    previous=event.get('prev'),\n                    actual=event.get('actual'),\n                    affected_pairs=get_affected_pairs(event.get('country', ''))\n                )\n                \n                event_dict = event_obj.model_dump()\n                event_dict['timestamp'] = event_dict['timestamp'].isoformat()\n                event_dict['created_at'] = event_dict['created_at'].isoformat()\n                events_to_insert.append(event_dict)\n            \n            if events_to_insert:\n                await db.economic_events.insert_many(events_to_insert)\n            \n            return {"message": f"Synced {len(events_to_insert)} events", "events_synced": len(events_to_insert)}\n    \n    except Exception as e:\n        raise HTTPException(status_code=500, detail=str(e))\n\n@api_router.get("/events/high-impact", response_model=List[EconomicEventResponse], tags=["events"])\nasync def get_high_impact_events(\n    days: int = Query(7, le=30),\n    user_id: str = Depends(get_current_user),\n    db=Depends(get_database)\n):\n    start_date = datetime.utcnow() - timedelta(days=days)\n    \n    events = await db.economic_events.find(\n        {"impact_level": "high"},\n        {"_id": 0}\n    ).sort("timestamp", -1).limit(50).to_list(50)\n    \n    for event in events:\n        if isinstance(event.get('timestamp'), str):\n            event['timestamp'] = datetime.fromisoformat(event['timestamp'])\n    \n    return [EconomicEventResponse(**event) for event in events]\n\n# Forex price endpoint\n@api_router.get("/forex/price/{symbol}", tags=["forex"])\nasync def get_forex_price(\n    symbol: str,\n    user_id: str = Depends(get_current_user)\n):\n    if not ALPHA_VANTAGE_KEY:\n        return {"symbol": symbol, "price": None, "message": "Alpha Vantage API key not configured"}\n    \n    try:\n        # Convert symbol format (e.g., EURUSD to EUR/USD)\n        from_currency = symbol[:3]\n        to_currency = symbol[3:]\n        \n        async with httpx.AsyncClient() as client:\n            response = await client.get(\n                "https://www.alphavantage.co/query",\n                params={\n                    "function": "CURRENCY_EXCHANGE_RATE",\n                    "from_currency": from_currency,\n                    "to_currency": to_currency,\n                    "apikey": ALPHA_VANTAGE_KEY\n                },\n                timeout=10.0\n            )\n            \n            if response.status_code != 200:\n                raise HTTPException(status_code=response.status_code, detail="Failed to fetch forex price")\n            \n            data = response.json()\n            \n            if "Realtime Currency Exchange Rate" in data:\n                rate_data = data["Realtime Currency Exchange Rate"]\n                return {\n                    "symbol": symbol,\n                    "price": float(rate_data.get("5. Exchange Rate", 0)),\n                    "bid": float(rate_data.get("8. Bid Price", 0)),\n                    "ask": float(rate_data.get("9. Ask Price", 0)),\n                    "timestamp": rate_data.get("6. Last Refreshed")\n                }\n            else:\n                return {"symbol": symbol, "price": None, "message": "Price data not available"}\n    \n    except Exception as e:\n        raise HTTPException(status_code=500, detail=str(e))\n\n# Helper functions\nasync def tag_trade_with_events(entry_time: datetime, db) -> List[str]:\n    """Find economic events within 30 minutes of trade entry"""\n    time_window_start = entry_time - timedelta(minutes=30)\n    time_window_end = entry_time + timedelta(minutes=30)\n    \n    events = await db.economic_events.find(\n        {\n            "timestamp": {\n                "$gte": time_window_start.isoformat(),\n                "$lte": time_window_end.isoformat()\n            },\n            "impact_level": "high"\n        },\n        {"_id": 0}\n    ).to_list(10)\n    \n    return [event.get('event_name', '') for event in events]\n\ndef get_affected_pairs(country: str) -> List[str]:\n    """Map country codes to affected currency pairs"""\n    country_pairs = {\n        "US": ["EURUSD", "GBPUSD", "USDJPY", "USDCAD", "AUDUSD", "NZDUSD"],\n        "EUR": ["EURUSD", "EURGBP", "EURJPY", "EURCHF"],\n        "GB": ["GBPUSD", "EURGBP", "GBPJPY"],\n        "JP": ["USDJPY", "EURJPY", "GBPJPY"],\n        "CA": ["USDCAD", "CADCHF"],\n        "AU": ["AUDUSD", "AUDJPY"],\n        "NZ": ["NZDUSD"],\n        "CH": ["USDCHF", "EURCHF"]\n    }\n    return country_pairs.get(country, [])\n\napp.include_router(api_router)\n\n@app.get("/health")\nasync def health_check():\n    return {"status": "healthy", "service": "forex-trading-journal"}", "path": "/app/backend/server.py
+            events_data = data.get('economicCalendar', [])
+            
+            if not events_data:
+                return {"message": "No events found", "events_synced": 0}
+            
+            high_impact_keywords = ['NFP', 'Non-Farm', 'FOMC', 'CPI', 'GDP', 'Interest Rate', 'Employment']
+            
+            from models import EconomicEvent
+            events_to_insert = []
+            
+            for event in events_data:
+                event_name = event.get('event', '')
+                impact = 'low'
+                
+                for keyword in high_impact_keywords:
+                    if keyword.lower() in event_name.lower():
+                        impact = 'high'
+                        break
+                
+                event_obj = EconomicEvent(
+                    event_name=event_name,
+                    country=event.get('country', ''),
+                    timestamp=datetime.fromisoformat(event.get('time', datetime.utcnow().isoformat())),
+                    impact_level=impact,
+                    forecast=event.get('estimate'),
+                    previous=event.get('prev'),
+                    actual=event.get('actual'),
+                    affected_pairs=get_affected_pairs(event.get('country', ''))
+                )
+                
+                event_dict = event_obj.model_dump()
+                event_dict['timestamp'] = event_dict['timestamp'].isoformat()
+                event_dict['created_at'] = event_dict['created_at'].isoformat()
+                events_to_insert.append(event_dict)
+            
+            if events_to_insert:
+                await db.economic_events.insert_many(events_to_insert)
+            
+            return {"message": f"Synced {len(events_to_insert)} events", "events_synced": len(events_to_insert)}
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/events/high-impact", response_model=List[EconomicEventResponse], tags=["events"])
+async def get_high_impact_events(
+    days: int = Query(7, le=30),
+    user_id: str = Depends(get_current_user),
+    db=Depends(get_database)
+):
+    start_date = datetime.utcnow() - timedelta(days=days)
+    
+    events = await db.economic_events.find(
+        {"impact_level": "high"},
+        {"_id": 0}
+    ).sort("timestamp", -1).limit(50).to_list(50)
+    
+    for event in events:
+        if isinstance(event.get('timestamp'), str):
+            event['timestamp'] = datetime.fromisoformat(event['timestamp'])
+    
+    return [EconomicEventResponse(**event) for event in events]
+
+# Forex price endpoint
+@api_router.get("/forex/price/{symbol}", tags=["forex"])
+async def get_forex_price(
+    symbol: str,
+    user_id: str = Depends(get_current_user)
+):
+    if not ALPHA_VANTAGE_KEY:
+        return {"symbol": symbol, "price": None, "message": "Alpha Vantage API key not configured"}
+    
+    try:
+        # Convert symbol format (e.g., EURUSD to EUR/USD)
+        from_currency = symbol[:3]
+        to_currency = symbol[3:]
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                "https://www.alphavantage.co/query",
+                params={
+                    "function": "CURRENCY_EXCHANGE_RATE",
+                    "from_currency": from_currency,
+                    "to_currency": to_currency,
+                    "apikey": ALPHA_VANTAGE_KEY
+                },
+                timeout=10.0
+            )
+            
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail="Failed to fetch forex price")
+            
+            data = response.json()
+            
+            if "Realtime Currency Exchange Rate" in data:
+                rate_data = data["Realtime Currency Exchange Rate"]
+                return {
+                    "symbol": symbol,
+                    "price": float(rate_data.get("5. Exchange Rate", 0)),
+                    "bid": float(rate_data.get("8. Bid Price", 0)),
+                    "ask": float(rate_data.get("9. Ask Price", 0)),
+                    "timestamp": rate_data.get("6. Last Refreshed")
+                }
+            else:
+                return {"symbol": symbol, "price": None, "message": "Price data not available"}
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Helper functions
+async def tag_trade_with_events(entry_time: datetime, db) -> List[str]:
+    """Find economic events within 30 minutes of trade entry"""
+    time_window_start = entry_time - timedelta(minutes=30)
+    time_window_end = entry_time + timedelta(minutes=30)
+    
+    events = await db.economic_events.find(
+        {
+            "timestamp": {
+                "$gte": time_window_start.isoformat(),
+                "$lte": time_window_end.isoformat()
+            },
+            "impact_level": "high"
+        },
+        {"_id": 0}
+    ).to_list(10)
+    
+    return [event.get('event_name', '') for event in events]
+
+def get_affected_pairs(country: str) -> List[str]:
+    """Map country codes to affected currency pairs"""
+    country_pairs = {
+        "US": ["EURUSD", "GBPUSD", "USDJPY", "USDCAD", "AUDUSD", "NZDUSD"],
+        "EUR": ["EURUSD", "EURGBP", "EURJPY", "EURCHF"],
+        "GB": ["GBPUSD", "EURGBP", "GBPJPY"],
+        "JP": ["USDJPY", "EURJPY", "GBPJPY"],
+        "CA": ["USDCAD", "CADCHF"],
+        "AU": ["AUDUSD", "AUDJPY"],
+        "NZ": ["NZDUSD"],
+        "CH": ["USDCHF", "EURCHF"]
+    }
+    return country_pairs.get(country, [])
+
+app.include_router(api_router)
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "forex-trading-journal"}
