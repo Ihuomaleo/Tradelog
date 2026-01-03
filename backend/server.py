@@ -35,7 +35,7 @@ async def lifespan(app: FastAPI):
     await close_mongo_connection()
 
 app = FastAPI(lifespan=lifespan)
-api_router = APIRouter(prefix=\"/api\")
+api_router = APIRouter(prefix="/api")
 
 # CORS
 app.add_middleware(
