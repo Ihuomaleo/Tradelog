@@ -47,7 +47,7 @@ app.add_middleware(
 )
 
 # Auth endpoints
-@api_router.post(\"/auth/register\", response_model=TokenResponse, tags=[\"auth\"])
+@api_router.post("/auth/register", response_model=TokenResponse, tags=["auth"])
 async def register(user_data: UserCreate, db=Depends(get_database)):
     # Check if user exists
     existing_user = await db.users.find_one({\"email\": user_data.email})
